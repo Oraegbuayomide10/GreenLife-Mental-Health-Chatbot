@@ -1,6 +1,7 @@
 """Main module for the FastAPI application."""
 
 # Importing necessary libraries
+import os
 import logging
 from typing import List
 from fastapi import FastAPI
@@ -15,6 +16,8 @@ from utils import build_lang_graph, store_user_data, create_faiss_db_from_docume
 logging.basicConfig(logging=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "" #for cuda devices default to cpu
 
 app = FastAPI()
 

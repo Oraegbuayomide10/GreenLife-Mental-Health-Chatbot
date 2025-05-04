@@ -6,16 +6,20 @@ from sys import exception
 from typing import List
 from pathlib import Path
 
+from torch import device
+
 # from torch import embedding
 from base_context import base_context
 from langgraph.graph import StateGraph
 
 from langchain_core.messages import AIMessage
 from langchain_community.vectorstores import FAISS
+from sentence_transformers import SentenceTransformer
 from models import GraphState, SentenceTransformers
 from langchain_core.runnables import RunnableLambda
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+# from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.runnables import RunnableLambda
 
@@ -128,7 +132,8 @@ def retrieve_faiss_db(
     """
     if storage:
         try:
-            embeddings = HuggingFaceEmbeddings(model_name=model_name.value)
+            # model = SentenceTransformer(model_name_or_path=model_name.value, device="cpu")
+            embeddings = HuggingFaceEmbeddings(model_name=model_name.value, model_kwargs = {'device': 'cpu'})
             retrieved_faiss_db = FAISS.load_local(
                 storage, embeddings, allow_dangerous_deserialization=True
             )
@@ -144,7 +149,7 @@ def retrieve_faiss_db(
                 raise ValueError(msg)
         except Exception as e:
             logger.error(
-                f"Failed to retrieve FAISS DB from {storage}. Error: {e}. "
+                f"Error: {e}. "
                 "Ensure the file exists and the path is correct."
             )
             raise
@@ -176,7 +181,7 @@ def retrieve_relevant_docs(
     logger.info(f'Query: {state.query}')
 
     try:
-        relevant_docs = vector_retriever.get_relevant_documents(state.query)
+        relevant_docs = vector_retriever.invoke(state.query)
         if relevant_docs:
             state.docs = relevant_docs
             logger.info(
