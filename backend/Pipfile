@@ -16,6 +16,8 @@ langchain-google-genai = "*"
 pandas = "*"
 kagglehub = "*"
 langchain-huggingface = "*"
+torch = "==2.2.2"
+numpy = "<2.0"
 
 [dev-packages]
 ipykernel = "*"

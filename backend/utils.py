@@ -14,7 +14,6 @@ from langgraph.graph import StateGraph
 
 from langchain_core.messages import AIMessage
 from langchain_community.vectorstores import FAISS
-from sentence_transformers import SentenceTransformer
 from models import GraphState, SentenceTransformers
 from langchain_core.runnables import RunnableLambda
 from langchain.text_splitter import RecursiveCharacterTextSplitter
