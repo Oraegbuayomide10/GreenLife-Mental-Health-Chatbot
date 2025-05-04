@@ -173,24 +173,18 @@ def retrieve_relevant_docs(
     """
     faiss_db = retrieve_faiss_db(storage, model_name)
     vector_retriever = faiss_db.as_retriever()
-
-    logger.info('############')
-    logger.info('############')
-    logger.info('############')
-    logger.info('############')
-    logger.info('############')
-    logger.info(f'Query: {state["query"]}')
+    logger.info(f'Query: {state.query}')
 
     try:
-        relevant_docs = vector_retriever.get_relevant_documents(state["query"])
+        relevant_docs = vector_retriever.get_relevant_documents(state.query)
         if relevant_docs:
-            state["docs"] = relevant_docs
+            state.docs = relevant_docs
             logger.info(
-                f"Retrieved {len(relevant_docs)} documents for query: {state['query']}"
+                f"Retrieved {len(relevant_docs)} documents for query: {state.query}"
             )
         else:
-            state["docs"] = []
-            logger.warning(f"No relevant documents found for query: {state['query']}")
+            state.docs = []
+            logger.warning(f"No relevant documents found for query: {state.query}")
     except Exception as e:
         logger.error(f"Error during document retrieval: {e}")
         raise e
@@ -246,19 +240,19 @@ def rewrite_reply(state: GraphState, llm:ChatGoogleGenerativeAI) -> GraphState:
         GraphState: The updated conversation state with the rewritten message.
     """
 
-    previous_reply = state['messages'][-1].content
-    prompt = f"Rewrite this reply to be more aligned with the user's emotional state ({state['emotion']}): {previous_reply}"
+    previous_reply = state.messages[-1].content
+    prompt = f"Rewrite this reply to be more aligned with the user's emotional state ({state.emotion}): {previous_reply}"
     try:
         response = llm.invoke(prompt)
         reply = response.content if hasattr(response, "content") else response
-        state["messages"].append(AIMessage(content=reply))
+        state.messages.append(AIMessage(content=reply))
         logger.info("Rewrote response successfully")
     except Exception as e:
         logger.error(f"Failed to rewrite response: {str(e)}")
         reply = "I'm sorry, I couldn't rewrite the response. Please try again."
-        state["messages"].append(AIMessage(content=reply))
+        state.messages.append(AIMessage(content=reply))
     
-    state["next"] = "relevant"
+    state.next = "END"
     return state
 
 
@@ -283,13 +277,13 @@ def generate_response(state: GraphState) -> GraphState:
 
     # initialize Prompt
     prompt = (
-        f"User (Age: {state['age']}, Gender: {state['gender']}, Emotion: {state['emotion']}): {state['query']}\n"
-        f"{base_context}. Generate a response based on all the instructions in the base context with the information in {state['docs']}. "
+        f"User (Age: {state.age}, Gender: {state.gender}, Emotion: {state.emotion}): {state.query}\n"
+        f"{base_context}. Generate a response like a message conversation between two friends of at most two sentences based on all the instructions in the base context with the information in {state.docs}."
         f"The response must incorporate relevant suggestions from the retrieved documents, especially from the mental health dataset, when applicable."
     )
 
     # Add Language capabilities
-    language = state.get("language")
+    language = state.language
     if language.lower() != 'english':
         prompt += f"Translate the final answer to {language}."
 
@@ -301,13 +295,13 @@ def generate_response(state: GraphState) -> GraphState:
 
         # Check if the reply contains any meaningful content
         if reply.strip():  # strip() removes leading and trailing whitespace
-            state["messages"].append(AIMessage(content=reply))
+            state.messages.append(AIMessage(content=reply))
             logger.info("Generated a valid response.")
         else:
             # Log and provide a fallback for empty or whitespace-only response
             logger.warning("Generated an empty or whitespace-only response.")
             reply = "I'm sorry, I couldn't generate a response. Please try again."
-            state["messages"].append(AIMessage(content=reply))
+            state.messages.append(AIMessage(content=reply))
     except Exception as e:
         # Handle and raise exceptions
         logger.error(f"Error generating response: {e}")
@@ -315,12 +309,12 @@ def generate_response(state: GraphState) -> GraphState:
 
     # Check if the response contains any relevant terms and update the next key in state based on this
     if any(term in reply.lower() for term in ["stress", "focus", "overwhelmed, adhd, anxious, anxiety, depression"]):
-        state["next"] = "END" 
+        state.next = "END" 
     else:
-        state["next"] = "RewriteReply"
+        state.next = "RewriteReply"
 
     # handling rewrite reply
-    if state["next"]== "END": 
+    if state.next== "END": 
         return state
     
     else:

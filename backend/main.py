@@ -5,6 +5,8 @@ import logging
 from typing import List
 from fastapi import FastAPI
 from models import GraphState
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from langchain_community.vectorstores import FAISS
 from models import GraphState, SentenceTransformers
 from utils import build_lang_graph, store_user_data, create_faiss_db_from_document
@@ -15,6 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Frontend url. You can replace the current URL with your frontend URL 
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"],  
+)
 
 
 @app.post("/store/user")
@@ -32,37 +42,31 @@ async def store_user_info(state: GraphState) -> list:
 
 
 @app.post("/chat")
-async def chat(state:GraphState):
+async def chat(state: GraphState):
+    """
+    Retrieves the query information from the User's message.
+    This endpoint is run when the user clicks send, thereby sending the message to this endpoint.
+    """
 
-    """
-        Retrieves the query information from the User's message.
-        This endpoint is run when the user clicks send, thereby sending the message to this endpoint.
-    """
+    logger.info(f"state from user: {state}")
 
     app = build_lang_graph()
     result = app.invoke(state)
 
     try:
         if result["messages"]:
-            reply = result["messages"][-1].content
-            logger.info("reply message relayed")
-            return reply
+            reply = result["messages"][-1].content  # Assuming the structure is correct
+            logger.info("Reply message relayed")
+            logger.info(f"reply: {reply}")
+            return {"reply": reply}  # Returning a structured JSON response
         else:
             logger.warning("No response generated")
+            return {"reply": "No response generated."}  # Return default message if no messages
     except Exception as e:
-        raise e
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
         
-
-            
     
-
-
-
-
-
-
-
-
 
 @app.post("/create/FAISS")
 async def create_faiss_db(

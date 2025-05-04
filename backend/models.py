@@ -98,8 +98,9 @@ class GraphState(BaseModel):
 
     messages: Annotated[list, add_messages] = []
     age: int = 50
+    emotion: Emotion = Emotion.STRESS
     gender: Gender = Gender.FEMALE
     language: str
-    query: str = "I am feeling overwhelmed and stressed at work due to working with children which can be naughty at times"
+    query: str 
     docs: list = []
     next: str

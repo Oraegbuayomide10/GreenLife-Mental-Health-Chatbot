@@ -1,32 +1,81 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
 function Chat() {
+  const now = new Date();
+  const hour = now.getHours();
+  const minutes = now.getMinutes();
+
   const [messages, setMessages] = useState([
     {
-      id: 1,
-      text: "Hi there! I'm GreenLife. How are you doing today?",
-      sender: "me",
+      id: Date.now(),
+      text: "Hi there! I'm GreenLife. How may I help your mental health?",
+      sender: "bot",
+      timestamp: `${hour}:${minutes}`,
     },
   ]);
-  const [input, setInput] = useState("");
 
-  const handleSend = () => {
-    if (input.trim() === "") return;
-    const now = new Date();
-    const hour = now.getHours();
-    const minutes = now.getMinutes();
+  const [input, setInput] = useState(""); // input from the User
 
-    const newMessage = {
+  const [loading, setLoading] = useState(false); //state variable to store the state of the send button
+
+  // // Reference for the messages container to scroll it
+  const messagesEndRef = useRef(null);
+
+  // // Scroll to the bottom whenever messages change
+  // useEffect(() => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // }, [messages]);
+
+  // function to handle all the sending and retrieval of messages - this function is run when the send button is clicked
+  const handleSend = async () => {
+    // set send button to true to identify that a message was sent to the backend
+    setLoading(true);
+
+    // Update messages with user messsage
+    const userMessage = {
       id: Date.now(),
       text: input,
+      sender: "user",
+      timestamp: `${hour}:${minutes}`,
+    };
+    setMessages((prevMessages) => [...prevMessages, userMessage]); // updating all messages
+    setInput("");
+
+    // send message to backend
+    const user_message = await fetch("http://localhost:8000/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messages: [],
+        age: 50,
+        emotion: "stress",
+        gender: "female",
+        language: "english",
+        query: input,
+        docs: [],
+        next: "string",
+      }),
+    });
+
+    // retrieve bot response
+    const llm_response = await user_message.json();
+
+    // Update state of messages with llm_response
+    const botMessage = {
+      id: Date.now(),
+      text: llm_response.reply,
       sender: "them",
       timestamp: `${hour}:${minutes}`,
     };
+    setMessages((prevMessages) => [...prevMessages, botMessage]);
 
-    const updatedMessages = [...messages, newMessage];
-    setMessages(updatedMessages);
-    setInput("");
-    console.log(updatedMessages);
+    // remove any value stored in
+    if (input.trim() === "") return;
+
+    setLoading(false);
   };
 
   return (
@@ -41,14 +90,23 @@ function Chat() {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`max-w-[70%] flex justify-between px-4 py-5 items-center rounded-lg ${
-              msg.sender === "them"
-                ? "bg-green-400 text-black ml-auto text-right mt-4"
-                : "bg-gray-300 text-gray-900 mt-4"
-            }`}
+            className={`max-w-[70%] px-4 py-3 rounded-lg mt-4 ${
+              msg.sender === "user"
+                ? "bg-green-400 text-black ml-auto"
+                : "bg-gray-300 text-gray-900"
+            } md:flex md:justify-between md:items-end`}
           >
-            <span>{msg.text}</span>
-            <span className="text-xs">{msg.timestamp}</span>
+            {/* Message Text */}
+            <div className="md:max-w-[90%]">
+              <ReactMarkdown>{msg.text}</ReactMarkdown>
+            </div>
+
+            {/* Timestamp */}
+            <div
+              className="text-xs text-right"
+            >
+              {msg.timestamp}
+            </div>
           </div>
         ))}
       </div>
