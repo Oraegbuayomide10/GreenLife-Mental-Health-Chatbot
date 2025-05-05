@@ -8,7 +8,7 @@ from pathlib import Path
 
 from torch import device
 
-# from torch import embedding
+from torch import embedding
 from base_context import base_context
 from langgraph.graph import StateGraph
 
@@ -133,9 +133,14 @@ def retrieve_faiss_db(
         try:
             # model = SentenceTransformer(model_name_or_path=model_name.value, device="cpu")
             embeddings = HuggingFaceEmbeddings(model_name=model_name.value, model_kwargs = {'device': 'cpu'})
+            logger.info('#########################')
+            logger.info('before loading faiss load local')
             retrieved_faiss_db = FAISS.load_local(
                 storage, embeddings, allow_dangerous_deserialization=True
             )
+            logger.info('#########################')
+            logger.info('after loading faiss load local')
+
 
             if retrieved_faiss_db:
                 logger.info(
