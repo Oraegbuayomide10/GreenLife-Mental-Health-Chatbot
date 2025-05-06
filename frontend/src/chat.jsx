@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { LuAudioLines } from "react-icons/lu";
 import { FaStopCircle } from "react-icons/fa";
-import CanvasRecorder from "./canvasRecorder";
 import { FaCircleStop, FaMicrophone } from "react-icons/fa6";
 import { v4 as uuidv4 } from "uuid";
 
