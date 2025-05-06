@@ -1,4 +1,7 @@
-# GreenLife-Mental-Health-Chatbot
+<p align="left">
+  <img src="./assets/green-life.svg" alt="FastAPI swagger UI" width="40"/>
+  <span style="font-size: 1.5em; margin-left: 10px;"><strong>GreenLife-Mental-Health-Chatbot</strong></span>
+</p>
 
 
 ## To install the backend application
@@ -30,12 +33,16 @@
 ### 5. Run Pipenv to install on dependencies from Pipfile
     pipenv install
 
-### 6. Run FastAPI
+
+### 6 Initiate the virtual environment
+    pipenv shell
+
+### 7. Run FastAPI
     fastapi dev main.py
 
 
 
-### 7. To view Swagger UI
+### 8. To view Swagger UI
     http://localhost:8000/docs
     
 You should see something like this below
